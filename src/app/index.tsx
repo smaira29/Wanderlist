@@ -1,13 +1,51 @@
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PlaceCard from '../components/PlaceCard';
+import type { Place } from '../lib/types';
 
 const appName = 'Wanderlist';
 
 export default function HomeScreen() {
+  const [name, setName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [category, setCategory] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [notesError, setNotesError] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [places, setPlaces] = useState<Place[]>([
+    { id: 'banff', name: 'Banff', category: 'nature', notes: 'See the mountains and Lake Louise.' },
+    { id: 'paris', name: 'Paris', category: 'city', notes: 'Visit the Eiffel Tower and explore cafés.' },
+  ]);
+
+  function addPlace() {
+    const trimmedName = name.trim();
+    const normalizedCategory = category.trim().toLowerCase();
+    const validCategory =
+      normalizedCategory === 'city' || normalizedCategory === 'nature' ||
+      normalizedCategory === 'food' || normalizedCategory === 'other';
+
+    setNameError(trimmedName ? '' : 'Please enter a place name.');
+    setNotesError(notes.length > 200 ? 'Notes must be 200 characters or fewer.' : '');
+    setCategoryError(validCategory ? '' : 'Enter city, nature, food or other.');
+
+    if (!trimmedName || notes.length > 200 || !validCategory) return;
+
+    const newPlace: Place = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: trimmedName,
+      category: normalizedCategory,
+      notes: notes.trim() || undefined,
+    };
+    setPlaces((currentPlaces) => [...currentPlaces, newPlace]);
+    setName('');
+    setNotes('');
+    setCategory('');
+  }
+
   return (
     <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Welcome to {appName}</Text>
         <Text style={styles.tagline}>Places I dream of visiting</Text>
 
@@ -16,21 +54,61 @@ export default function HomeScreen() {
           style={styles.image}
         />
 
-        <View style={styles.headingRow}>
-          <Text style={styles.heading}>My places</Text>
-          <Text>2 saved</Text>
+        <View style={styles.form}>
+          <Text style={styles.heading}>Add a place</Text>
+
+          <Text style={styles.label}>Name</Text>
+          <TextInput
+            style={styles.input}
+            accessibilityLabel="Place name"
+            placeholder="e.g. Montreal"
+            value={name}
+            onChangeText={setName}
+          />
+          {nameError ? <Text style={styles.error} accessibilityRole="alert">{nameError}</Text> : null}
+
+          <Text style={styles.label}>Notes (optional)</Text>
+          <TextInput
+            style={[styles.input, styles.notesInput]}
+            accessibilityLabel="Place notes"
+            placeholder="What would you like to do?"
+            multiline
+            value={notes}
+            onChangeText={setNotes}
+          />
+          <Text style={styles.hint}>{notes.length}/200 characters</Text>
+          {notesError ? <Text style={styles.error} accessibilityRole="alert">{notesError}</Text> : null}
+
+          <Text style={styles.label}>Category</Text>
+          <TextInput
+            style={styles.input}
+            accessibilityLabel="Place category"
+            placeholder="city, nature, food or other"
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={category}
+            onChangeText={setCategory}
+          />
+          {categoryError ? <Text style={styles.error} accessibilityRole="alert">{categoryError}</Text> : null}
+
+          <Pressable style={styles.button} onPress={addPlace} accessibilityRole="button">
+            <Text style={styles.buttonText}>Add place</Text>
+          </Pressable>
         </View>
 
-        <PlaceCard
-          name="Banff"
-          category="Nature"
-          notes="See the mountains and Lake Louise."
-        />
-        <PlaceCard
-          name="Paris"
-          category="City"
-          notes="Visit the Eiffel Tower and explore cafés."
-        />
+        <View style={styles.headingRow}>
+          <Text style={styles.heading}>My places</Text>
+          <Text>{places.length} saved</Text>
+        </View>
+
+        {places.map((place) => (
+          <PlaceCard
+            key={place.id}
+            name={place.name}
+            category={place.category}
+            notes={place.notes}
+          />
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -66,6 +144,50 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  form: {
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  label: {
+    fontWeight: '600',
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#9eafa9',
+    borderRadius: 8,
+    padding: 12,
+    color: '#173d35',
+    backgroundColor: '#ffffff',
+  },
+  notesInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  hint: {
+    fontSize: 12,
+    color: '#52645d',
+    marginTop: 4,
+  },
+  error: {
+    color: '#b42318',
+    marginTop: 4,
+  },
+  button: {
+    backgroundColor: '#174d45',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 18,
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   heading: {
     fontSize: 20,

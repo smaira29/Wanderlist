@@ -1,10 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
+import type { Place } from '../lib/types';
 
-type PlaceCardProps = {
-  name: string;
-  category: string;
-  notes: string;
-};
+type PlaceCardProps = Pick<Place, 'name' | 'category' | 'notes'>;
 
 export default function PlaceCard({ name, category, notes }: PlaceCardProps) {
   return (
@@ -13,7 +10,7 @@ export default function PlaceCard({ name, category, notes }: PlaceCardProps) {
         <Text style={styles.name}>{name}</Text>
         <Text>{category}</Text>
       </View>
-      <Text>{notes}</Text>
+      {notes !== undefined ? <Text>{notes}</Text> : null}
     </View>
   );
 }
